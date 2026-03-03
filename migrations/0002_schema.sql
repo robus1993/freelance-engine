@@ -14,8 +14,7 @@ CREATE TABLE IF NOT EXISTS vendors (
 CREATE TABLE IF NOT EXISTS projects (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  confidentiality TEXT NOT NULL DEFAULT 'STANDARD'
-    CHECK (confidentiality IN ('STANDARD','CONFIDENTIAL')),
+  confidentiality TEXT NOT NULL DEFAULT 'STANDARD' CHECK (confidentiality IN ('STANDARD','CONFIDENTIAL')),
   supervisor_email TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -32,7 +31,7 @@ CREATE TABLE IF NOT EXISTS assignments (
   FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
 );
 
--- Enforcement: Confidential projects => US_CITIZEN vendors only
+-- Enforcement trigger (drop + recreate)
 DROP TRIGGER IF EXISTS enforce_us_only_on_confidential;
 
 CREATE TRIGGER enforce_us_only_on_confidential
@@ -40,8 +39,6 @@ BEFORE INSERT ON assignments
 FOR EACH ROW
 WHEN (SELECT confidentiality FROM projects WHERE id = NEW.project_id) = 'CONFIDENTIAL'
 BEGIN
-  SELECT CASE
-    WHEN (SELECT citizenship FROM vendors WHERE id = NEW.vendor_id) <> 'US_CITIZEN'
-    THEN RAISE(ABORT, 'Confidential projects may only be assigned to US_CITIZEN vendors.')
-  END;
+  SELECT RAISE(ABORT, 'Confidential projects may only be assigned to US_CITIZEN vendors.')
+  WHERE (SELECT citizenship FROM vendors WHERE id = NEW.vendor_id) <> 'US_CITIZEN';
 END;
