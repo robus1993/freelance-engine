@@ -1,4 +1,5 @@
 ﻿import type { APIRoute } from "astro";
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
 }
@@ -7,23 +8,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const body = await request.json();
     const project_id = String(body?.project_id ?? "").trim();
-    const vendor_id = String(body?.vendor_id ?? "").trim();
     if (!project_id) return json({ ok:false, error:"project_id is required" }, 400);
-    if (!vendor_id) return json({ ok:false, error:"vendor_id is required" }, 400);
 
     // @ts-ignore
     const DB = locals.runtime.env.DB as D1Database;
 
-    const id = crypto.randomUUID();
+    const r = await DB.prepare(`
+      UPDATE projects
+      SET status='SUBMITTED', submitted_at=datetime('now')
+      WHERE id=? AND status='DRAFT'
+    `).bind(project_id).run();
 
-    await DB.prepare(`
-      INSERT INTO assignments (id, project_id, vendor_id)
-      VALUES (?, ?, ?)
-    `).bind(id, project_id, vendor_id).run();
+    if ((r?.meta?.changes ?? 0) === 0) {
+      return json({ ok:false, error:"Project must be in DRAFT to submit." }, 400);
+    }
 
-    return json({ ok:true, id });
+    return json({ ok:true });
   } catch (err:any) {
-    // This will surface trigger messages like CONFIDENTIAL US-only
-    return json({ ok:false, error: err?.message ?? "Unknown error" }, 400);
+    return json({ ok:false, error: err?.message ?? "Unknown error" }, 500);
   }
 };
