@@ -1,4 +1,6 @@
--- Vendors (freelancers/contractors)
+-- 0002_schema.sql
+
+-- Vendors
 CREATE TABLE IF NOT EXISTS vendors (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -18,7 +20,7 @@ CREATE TABLE IF NOT EXISTS projects (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Assignments (who is assigned to which project)
+-- Assignments
 CREATE TABLE IF NOT EXISTS assignments (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL,
@@ -30,15 +32,16 @@ CREATE TABLE IF NOT EXISTS assignments (
   FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
 );
 
--- Enforcement: if project is CONFIDENTIAL, only US_CITIZEN vendors can be assigned
-CREATE TRIGGER IF NOT EXISTS enforce_us_only_on_confidential
+-- Enforcement: Confidential projects => US_CITIZEN vendors only
+DROP TRIGGER IF EXISTS enforce_us_only_on_confidential;
+
+CREATE TRIGGER enforce_us_only_on_confidential
 BEFORE INSERT ON assignments
 FOR EACH ROW
+WHEN (SELECT confidentiality FROM projects WHERE id = NEW.project_id) = 'CONFIDENTIAL'
 BEGIN
-  SELECT
-    CASE
-      WHEN (SELECT confidentiality FROM projects WHERE id = NEW.project_id) = 'CONFIDENTIAL'
-       AND (SELECT citizenship FROM vendors WHERE id = NEW.vendor_id) <> 'US_CITIZEN'
-      THEN RAISE(ABORT, 'Confidential projects may only be assigned to US_CITIZEN vendors.')
-    END;
+  SELECT CASE
+    WHEN (SELECT citizenship FROM vendors WHERE id = NEW.vendor_id) <> 'US_CITIZEN'
+    THEN RAISE(ABORT, 'Confidential projects may only be assigned to US_CITIZEN vendors.')
+  END;
 END;
