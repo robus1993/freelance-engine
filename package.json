@@ -1,7 +1,10 @@
 {
   "name": "freelancer-engine",
   "version": "1.0.0",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
   "scripts": {
-    "build": "mkdir -p dist && echo 'Built' > dist/index.html"
+    "build": "mkdir -p dist && echo 'API Engine Active' > dist/index.html"
   }
 }
