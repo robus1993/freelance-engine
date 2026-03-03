@@ -1,7 +1,10 @@
 ﻿import type { APIRoute } from "astro";
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
 }
 
 export const GET: APIRoute = async ({ url, locals }) => {
@@ -12,15 +15,38 @@ export const GET: APIRoute = async ({ url, locals }) => {
     // @ts-ignore
     const DB = locals.runtime.env.DB as D1Database;
 
+    // NOTE: title AS name is for backward compatibility with older UI
     const { results } = await DB.prepare(`
-      SELECT id, name, confidentiality, status, supervisor_email,
-             submission_url, submission_notes, submitted_at,
-             approved_at, approved_by, approval_notes,
-             changes_requested_at, changes_requested_by, changes_notes,
-             created_at
-      FROM projects
-      WHERE lower(supervisor_email) = ?
-      ORDER BY created_at DESC
+      SELECT
+        p.id,
+        p.title AS name,
+        p.title,
+        p.description,
+        p.estimated_hours,
+        p.hourly_rate_domestic,
+        p.hourly_rate_international,
+        p.attachment_url,
+        p.supervisor_email,
+        p.classification,
+        p.budget_basis,
+        p.approved_estimated_budget,
+        p.supervisor_approved,
+        p.supervisor_notes,
+        p.status,
+        p.submitted_at,
+        p.approved_at,
+        p.started_at,
+        p.completed_at,
+        p.billed_hours,
+        p.created_at,
+        a.vendor_id,
+        v.name AS vendor_name,
+        v.citizenship AS vendor_citizenship
+      FROM projects p
+      LEFT JOIN assignments a ON a.project_id = p.id
+      LEFT JOIN vendors v ON v.id = a.vendor_id
+      WHERE lower(p.supervisor_email) = ?
+      ORDER BY p.created_at DESC
       LIMIT 200
     `).bind(email).all();
 
