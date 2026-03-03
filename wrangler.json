@@ -3,7 +3,7 @@
     {
       "binding": "DB",
       "database_name": "freelancer_db",
-      "migrations_dir": "migrations"
+      "migrations_dir": "./migrations"
     }
   ]
 }
