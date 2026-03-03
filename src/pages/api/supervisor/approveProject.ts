@@ -53,11 +53,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
         budget_basis=?,
         approved_estimated_budget=?,
         supervisor_approved=1,
+        approved_by=?,
         supervisor_notes=?,
         status='APPROVED',
         approved_at=datetime('now')
       WHERE id=? AND status='SUBMITTED'
-    `).bind(classification, budget_basis, approved_estimated_budget, notes, project_id).run();
+    `).bind(classification, budget_basis, approved_estimated_budget, approved_by, notes, project_id).run();
 
     return json({ ok:true, approved_estimated_budget });
   } catch (err:any) {
