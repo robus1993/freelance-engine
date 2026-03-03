@@ -1,0 +1,7 @@
+{
+  "name": "freelancer-engine",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "mkdir -p dist && echo 'Built' > dist/index.html"
+  }
+}
