@@ -12,12 +12,12 @@ export const GET: APIRoute = async ({ locals }) => {
     // @ts-ignore
     const DB = locals.runtime.env.DB as D1Database;
 
-    const { results } = await DB.prepare(
-      \SELECT id, name, confidentiality, supervisor_email, created_at
-       FROM projects
-       ORDER BY created_at DESC
-       LIMIT 200\
-    ).all();
+    const { results } = await DB.prepare(`
+      SELECT id, name, confidentiality, supervisor_email, created_at
+      FROM projects
+      ORDER BY created_at DESC
+      LIMIT 200
+    `).all();
 
     return json({ ok: true, projects: results ?? [] });
   } catch (err: any) {
