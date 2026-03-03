@@ -6,7 +6,7 @@
     {
       "binding": "DB",
       "database_name": "freelancer_db",
-      "database_id": "123456789",
+      "database_id": "6755a3d2-7844-4d20-aba7-8c5c9256f401",
       "migrations_dir": "./migrations"
     }
   ]
