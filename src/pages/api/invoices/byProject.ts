@@ -1,12 +1,12 @@
 ﻿import type { APIRoute } from "astro";
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
+function json(data: unknown, status=200) {
+  return new Response(JSON.stringify(data), { status, headers: { "content-type":"application/json" } });
 }
 
 export const GET: APIRoute = async ({ url, locals }) => {
-  try {
+  try{
     const project_id = (url.searchParams.get("project_id") || "").trim();
-    if (!project_id) return json({ ok:false, error:"project_id is required" }, 400);
+    if(!project_id) return json({ ok:false, error:"project_id is required" }, 400);
 
     // @ts-ignore
     const DB = locals.runtime.env.DB as D1Database;
@@ -15,6 +15,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
       SELECT
         i.*,
         p.title, p.description, p.attachment_url, p.supervisor_email,
+        p.classification, p.approved_estimated_budget,
         v.name AS vendor_name, v.email AS vendor_email, v.citizenship AS vendor_citizenship
       FROM invoices i
       JOIN projects p ON p.id = i.project_id
@@ -24,10 +25,10 @@ export const GET: APIRoute = async ({ url, locals }) => {
     `).bind(project_id).all();
 
     const row = results?.[0] as any;
-    if (!row) return json({ ok:false, error:"Invoice not found" }, 404);
+    if(!row) return json({ ok:false, error:"Invoice not found" }, 404);
 
     return json({ ok:true, invoice: row });
-  } catch (err:any) {
+  } catch(err:any){
     return json({ ok:false, error: err?.message ?? "Unknown error" }, 500);
   }
 };

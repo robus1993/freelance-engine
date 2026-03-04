@@ -7,21 +7,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try{
     const b = await request.json();
     const id = String(b?.project_id ?? "").trim();
+    const billed_hours = Number(b?.billed_hours ?? NaN);
+
     if(!id) return json({ ok:false, error:"project_id is required" }, 400);
+    if(!Number.isFinite(billed_hours) || billed_hours < 0) return json({ ok:false, error:"billed_hours invalid" }, 400);
 
     // @ts-ignore
     const DB = locals.runtime.env.DB as D1Database;
 
-    const { results: a } = await DB.prepare(`SELECT vendor_id FROM assignments WHERE project_id=? LIMIT 1`).bind(id).all();
-    if(!a?.length) return json({ ok:false, error:"Assign a vendor before starting." }, 400);
-
     const r = await DB.prepare(`
       UPDATE projects
-      SET status='IN_PROGRESS', started_at=datetime('now')
-      WHERE id=? AND status='PENDING_START'
-    `).bind(id).run();
+      SET billed_hours=?
+      WHERE id=? AND status='COMPLETED'
+    `).bind(billed_hours, id).run();
 
-    if((r?.meta?.changes ?? 0) === 0) return json({ ok:false, error:"Project must be PENDING_START to start." }, 400);
+    if((r?.meta?.changes ?? 0) === 0) return json({ ok:false, error:"Project must be COMPLETED to edit billed hours." }, 400);
 
     return json({ ok:true });
   } catch(err:any){
